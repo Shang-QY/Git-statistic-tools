@@ -1,12 +1,12 @@
 import git
 from openpyxl import Workbook
-from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment
 
 # 配置
 repo_path = 'Intel'  # 你的Git仓库路径
-input_file = 'cherry-pick-progress.txt'  # 包含提交哈希的文本文件
-output_file = 'commits-new2.xlsx'  # 输出的Excel文件
+input_file = 'commits-from-merge-base.txt'  # 包含提交哈希的文本文件
+output_file = 'commits-new4.xlsx'  # 输出的Excel文件
 
 # 初始化Git仓库
 repo = git.Repo(repo_path)
@@ -17,7 +17,7 @@ ws = wb.active
 ws.title = "Commits"
 
 # 设置Excel表头
-headers = ['Commit Hash', 'Commit Message Title', 'Detailed Commit Message', 'Modified Files']
+headers = ['Commit Hash', 'Commit Message Title', 'Detailed Commit Message', 'Modified Files', 'Lines Added', 'Lines Deleted']
 ws.append(headers)
 
 # 读取提交哈希列表
@@ -32,10 +32,16 @@ for commit_hash in commit_hashes:
         detailed_commit_message = commit.message.strip()  # 获取完整的提交消息
         # 获取修改的文件列表及其统计数据
         modified_files_stats = []
+        total_lines_added = 0
+        total_lines_deleted = 0
         for file_path, stats in commit.stats.files.items():
             modified_files_stats.append(f"{file_path} (+{stats['insertions']}/-{stats['deletions']})")
+            total_lines_added += stats['insertions']
+            total_lines_deleted += stats['deletions']
         modified_files = '\n'.join(modified_files_stats)  # 每个文件后换行
-        ws.append([commit_hash, commit_message_title, detailed_commit_message, modified_files])
+        # 创建一个包含提交信息的行
+        row = [commit_hash, commit_message_title, detailed_commit_message, modified_files, total_lines_added, total_lines_deleted]
+        ws.append(row)
         # 获取当前行号
         current_row = ws.max_row
         # 设置单元格的自动换行
